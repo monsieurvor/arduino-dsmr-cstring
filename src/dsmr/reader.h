@@ -5,6 +5,8 @@
  *
  * Copyright (c) 2015 Matthijs Kooijman <matthijs@stdin.nl>
  *
+ * Modified March 2024 Yvar Dankers
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -98,7 +100,10 @@ class P1Reader {
       digitalWrite(this->req_pin, LOW);
       this->state = State::DISABLED_STATE;
       if (!this->_available)
-        this->buffer = "";
+      {
+        memset(buffer, 0, sizeof(buffer));
+        currentLength = 0;
+      }
       // Clear any pending bytes
       while(this->stream->read() >= 0) /* nothing */;
     }
@@ -109,6 +114,14 @@ class P1Reader {
      */
     bool available() {
       return this->_available;
+    }
+
+    /**
+    * Returns the length of the telegram received
+     */
+    size_t telegramSize()
+    {
+      return this->currentLength;
     }
 
     /**
@@ -166,13 +179,12 @@ class P1Reader {
               if (c == '!')
                 this->state = State::CHECKSUM_STATE;
               else
-                buffer.concat((char)c);
+                buffer[currentLength++] = (char)c;
 
               break;
             case State::CHECKSUM_STATE:
-              // This cannot happen (given the surrounding if), but the
-              // compiler is not smart enough to see this, so list this
-              // case to prevent a warning.
+              // This cannot happen, given the surrounding if()
+              // but list this case to prevent a warning.
               abort();
               break;
           }
@@ -184,7 +196,7 @@ class P1Reader {
     /**
      * Returns the data read so far.
      */
-    const String &raw() {
+    const char *raw() {
       return buffer;
     }
 
@@ -199,7 +211,7 @@ class P1Reader {
      */
     template<typename... Ts>
     bool parse(ParsedData<Ts...> *data, String *err) {
-      const char *str = buffer.c_str(), *end = buffer.c_str() + buffer.length();
+      const char *str = buffer, *end = buffer + currentLength;
       ParseResult<void> res = P1Parser::parse_data(data, str, end);
 
       if (res.err && err)
@@ -216,7 +228,8 @@ class P1Reader {
      */
     void clear() {
       if (_available) {
-        buffer = "";
+        memset(buffer, 0, sizeof(buffer));
+        currentLength = 0;
         _available = false;
       }
     }
@@ -233,7 +246,8 @@ class P1Reader {
     bool _available;
     bool once;
     State state;
-    String buffer;
+    char buffer[1024];
+    size_t currentLength = 0;
     uint16_t crc;
 };
 
