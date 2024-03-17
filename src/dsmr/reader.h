@@ -177,7 +177,10 @@ class P1Reader {
               // Include the ! in the CRC
               this->crc = _crc16_update(this->crc, c);
               if (c == '!')
+              {
+                buffer[currentLength] = 0; // End of telegram. Null-terminate buffer
                 this->state = State::CHECKSUM_STATE;
+              }
               else
                 buffer[currentLength++] = (char)c;
 
