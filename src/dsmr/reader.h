@@ -34,6 +34,10 @@
 #ifndef DSMR_INCLUDE_READER_H
 #define DSMR_INCLUDE_READER_H
 
+#ifndef P1_BUFFER_SIZE
+#define P1_BUFFER_SIZE 1024
+#endif
+
 #include <Arduino.h>
 #include "crc16.h"
 
@@ -101,7 +105,7 @@ class P1Reader {
       this->state = State::DISABLED_STATE;
       if (!this->_available)
       {
-        memset(buffer, 0, sizeof(buffer));
+        memset(buffer, 0, P1_BUFFER_SIZE);
         currentLength = 0;
       }
       // Clear any pending bytes
@@ -231,7 +235,7 @@ class P1Reader {
      */
     void clear() {
       if (_available) {
-        memset(buffer, 0, sizeof(buffer));
+        memset(buffer, 0, P1_BUFFER_SIZE);
         currentLength = 0;
         _available = false;
       }
@@ -249,7 +253,7 @@ class P1Reader {
     bool _available;
     bool once;
     State state;
-    char buffer[1024];
+    char buffer[P1_BUFFER_SIZE];
     size_t currentLength = 0;
     uint16_t crc;
 };
