@@ -35,7 +35,7 @@
 #define DSMR_INCLUDE_READER_H
 
 #ifndef P1_BUFFER_SIZE
-#define P1_BUFFER_SIZE 1024
+#define P1_BUFFER_SIZE 1536
 #endif
 
 #include <Arduino.h>
@@ -180,7 +180,7 @@ class P1Reader {
             case State::READING_STATE:
               // Include the ! in the CRC
               this->crc = _crc16_update(this->crc, c);
-              if (c == '!')
+              if (c == '!' || currentLength == P1_BUFFER_SIZE)
               {
                 buffer[currentLength] = 0; // End of telegram. Null-terminate buffer
                 this->state = State::CHECKSUM_STATE;
