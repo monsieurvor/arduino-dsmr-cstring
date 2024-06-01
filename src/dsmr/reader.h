@@ -69,10 +69,10 @@ namespace dsmr
      * port to which the P1 TX pin is connected. The req_pin is the
      * pin connected to the request pin. The pin is configured as an
      * output, the Stream is assumed to be already set up (e.g. baud
-     * rate configured).
+     * rate configured). Optional CRC check arg.
      */
-    P1Reader(Stream *stream, uint8_t req_pin)
-        : stream(stream), req_pin(req_pin), once(false), state(State::DISABLED_STATE)
+    P1Reader(Stream *stream, uint8_t req_pin, bool check_crc = true)
+        : stream(stream), req_pin(req_pin), once(false), state(State::DISABLED_STATE), _check_crc(check_crc)
     {
       pinMode(req_pin, OUTPUT);
       digitalWrite(req_pin, LOW);
@@ -129,6 +129,13 @@ namespace dsmr
       {
         if (state == State::CHECKSUM_STATE)
         {
+          if (!_check_crc)
+          {
+            this->_available = true;
+            if (once)
+              this->disable();
+            return true;
+          }
           // Let the Stream buffer the CRC bytes. Convert to size_t to
           // prevent unsigned vs signed comparison
           if ((size_t)this->stream->available() < CrcParser::CRC_LEN)
@@ -185,9 +192,8 @@ namespace dsmr
 
             break;
           case State::CHECKSUM_STATE:
-            // This cannot happen (given the surrounding if), but the
-            // compiler is not smart enough to see this, so list this
-            // case to prevent a warning.
+            // This cannot happen (given the surrounding if)
+            // list this case to prevent a warning.
             abort();
             break;
           }
@@ -252,6 +258,7 @@ namespace dsmr
     };
     bool _available;
     bool once;
+    bool _check_crc;
     State state;
     String buffer;
     uint16_t crc;
