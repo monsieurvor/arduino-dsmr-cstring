@@ -132,9 +132,9 @@ namespace dsmr
           if (!_check_crc)
           {
             this->_available = true;
+            state = State::WAITING_STATE;
             if (once)
               this->disable();
-            state = State::WAITING_STATE;
             return true;
           }
           // Let the Stream buffer the CRC bytes. Convert to size_t to
