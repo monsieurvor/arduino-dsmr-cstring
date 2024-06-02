@@ -134,6 +134,7 @@ namespace dsmr
             this->_available = true;
             if (once)
               this->disable();
+            state = State::WAITING_STATE;
             return true;
           }
           // Let the Stream buffer the CRC bytes. Convert to size_t to
@@ -178,13 +179,15 @@ namespace dsmr
             {
               this->state = State::READING_STATE;
               // Include the / in the CRC
-              this->crc = _crc16_update(0, c);
+              if (_check_crc)
+                this->crc = _crc16_update(0, c);
               this->clear();
             }
             break;
           case State::READING_STATE:
             // Include the ! in the CRC
-            this->crc = _crc16_update(this->crc, c);
+            if (_check_crc)
+              this->crc = _crc16_update(this->crc, c);
             if (c == '!')
               this->state = State::CHECKSUM_STATE;
             else
